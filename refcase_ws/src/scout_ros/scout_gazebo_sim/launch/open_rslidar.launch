@@ -1,0 +1,58 @@
+<?xml version='1'?>
+<launch>
+  <!--
+  <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
+  <param name="target_frame" value="velodyne"/>
+  <param name="transform_tolerance" value="0.01"/>
+  <param name="min_height" value="0.0"/>
+  <param name="max_height" value="1.0"/>
+  <param name="angle_min" value="-3.14"/>
+  <param name="angle_max" value="3.14"/>
+  <param name="angle_increment" value="0.0087"/>
+  <param name="range_min" value="0.3"/>
+  <param name="range_max" value="10.0"/>
+  <param name="scan_time" value="0.1"/>
+  <param name="use_inf" value="true"/>
+  <remap from="cloud_in" to="/velodyne_points"/>
+  <remap from="scan" to="/scan"/>
+</node>
+
+-->
+
+
+  <!-- <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser" 
+     args="0.0 0.0 0.348575 0.0 0.0 0.0 base_link velodyne 100"/> -->
+
+ <node pkg="tf" type="static_transform_publisher" name="base_link_to_laser"
+     args="0.0 0.0 0.348575 0.0 0.0 0.0 base_link velodyne 100"/>
+
+   <node pkg="rf2o_laser_odometry" type="rf2o_laser_odometry_node" name="rf2o_laser_odometry" output="screen">
+    <param name="laser_scan_topic" value="/scan"/>            # topic where the lidar scans are being published
+    <param name="odom_topic" value="/odom" />                 # topic where tu publish the odometry estimations
+    
+    <param name="base_frame_id" value="base_link"/>                # frame_id (tf) of the mobile robot base. A tf transform from the laser_frame to the base_frame is mandatory
+    <param name="odom_frame_id" value="odom" />                # frame_id (tf) to publish the odometry estimations  
+    <param name="publish_tf" value="false" />                  # EKF owns odom->base_link TF now
+    <param name="init_pose_from_topic" value="" />             # (Odom topic) Leave empty to start at point (0,0)
+    <param name="freq" value="10.0"/>                          # Execution frequency.
+    <param name="verbose" value="true" />                      # verbose
+  </node>
+
+  <!-- Added for IMU -->
+  <!-- MicroStrain IMU driver -->
+  <node pkg="microstrain_inertial_driver" type="microstrain_inertial_driver_node" name="microstrain_inertial_driver" output="screen">
+    <param name="port"                  value="/dev/ttyACM0"/>
+    <param name="baudrate"              value="115200"/>
+    <param name="imu_frame_id"          value="imu_link"/>
+    <param name="imu_data_rate"         value="50"/>
+    <param name="publish_imu"           value="true"/>
+    <param name="publish_filtered_imu"  value="false"/>
+  </node>
+
+  <!-- Added for IMU -->
+  <!-- robot_localization EKF: fuse rf2o odometry + IMU -->
+  <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization" output="screen">
+    <rosparam command="load" file="$(find scout_bringup)/config/ekf_params.yaml"/>
+  </node>
+
+</launch>

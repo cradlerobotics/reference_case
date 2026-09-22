@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="use_map_topic" default="true"/>
+  <arg name="scan_topic"    default="scan"/>
+
+  <node pkg="amcl" type="amcl" name="amcl" output="screen">
+    <rosparam file="$(find scout_description)/param/amcl_params.yaml" command="load"/>
+    <param name="use_map_topic" value="$(arg use_map_topic)"/>
+    <param name="scan_topic"    value="$(arg scan_topic)"/>
+    <param name="initial_pose_x" value="0.0"/>
+    <param name="initial_pose_y" value="0.0"/>
+    <param name="initial_pose_a" value="0.0"/>
+    <!-- <param name="initial_pose_a" value="3.14159"/> -->
+  </node>
+</launch>

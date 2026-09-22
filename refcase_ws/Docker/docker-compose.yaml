@@ -1,0 +1,34 @@
+#version: "3.8"
+
+services:
+  refcase_melodic:
+    image: everskyrube/reference_case:latest
+    container_name: refcase_melodic
+    entrypoint: /bin/bash
+    network_mode: host
+    ipc: host
+    privileged: true
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /etc/localtime:/etc/localtime:ro
+      - /dev:/dev
+      - /dev/bus/usb:/dev/bus/usb
+      - ~/.Xauthority:/root/.Xauthority/.docker.xauth:rw
+      - ~/refcase_ws/:/catkin_ws
+      - ~/mcapl:/mcapl
+    working_dir: /catkin_ws
+    device_cgroup_rules:
+      - 'c *:* rmw'
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - video
+    environment:
+      - DISPLAY=$DISPLAY
+      - XAUTHORITY=/root/.Xauthority/.docker.xauth
+      - QT_X11_NO_MITSHM=1
+      - LIBGL_ALWAYS_INDIRECT=0
+      - AJPF_HOME=/mcapl
+      - CLASSPATH=/mcapl/bin:/mcapl/lib/3rdparty/*
+    shm_size: 32G
+    stdin_open: true

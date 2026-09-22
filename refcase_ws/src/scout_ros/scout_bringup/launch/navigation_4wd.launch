@@ -1,0 +1,88 @@
+<?xml version="1"?>
+<!-- 
+  Simulate a carlike robot with the teb_local_planner in stage:
+  - stage
+  - map_server
+  - move_base
+  - static map
+  - amcl
+  - rviz view
+ -->
+<launch>
+
+	<!--  ****** Robot description (needed for wheel link TFs) *****  -->
+	<param name="robot_description"
+		command="$(find xacro)/xacro --inorder '$(find scout_description)/urdf/my_scout_mini_FIXED.xacro'" />
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+	<!--  ****** Maps *****  -->
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find scout_description)/maps/labMap.yaml" output="screen">
+		<param name="frame_id" value="map"/>
+		</node>
+
+	<!--- Run AMCL -->
+	<include file="$(find scout_gazebo_sim)/launch/amcl.launch">
+		<arg name="use_map_topic" value="true" />
+		<arg name="scan_topic"    value="scan" />
+	</include>	
+
+<!---
+  <node pkg="amcl" type="amcl" name="amcl" output="screen">
+		<rosparam file="$(find scout_description)/param/amcl_params.yaml" command="load" />
+      		<param name="initial_pose_x"            value="0"/>
+      		<param name="initial_pose_y"            value="0"/>
+		<param name="initial_pose_a"            value="0"/>
+	</node>-->
+
+
+	<!--  ************** Navigation ***************  -->
+
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <rosparam file="$(find scout_description)/param/4wd/costmap_common_params.yaml" command="load" ns="global_costmap" />
+
+    <rosparam file="$(find scout_description)/param/4wd/costmap_common_params.yaml" command="load" ns="local_costmap" />
+
+    <rosparam file="$(find scout_description)/param/4wd/local_costmap_params.yaml" command="load" />
+
+    <rosparam file="$(find scout_description)/param/4wd/global_costmap_params.yaml" command="load" />
+
+    <rosparam file="$(find scout_description)/param/4wd/base_local_planner_params.yaml" command="load" />
+
+    <rosparam file="$(find scout_description)/param/4wd/move_base_params.yaml" command="load" />
+  </node>
+
+	<!--  **************** Visualisation ****************  -->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find scout_gazebo_sim)/rviz/navigation.rviz" />  
+
+
+
+</launch>
+
+
+
+
+
+<!--</launch>
+
+	<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+
+
+    <rosparam file="$(find scout_gazebo_sim)/params/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find scout_gazebo_sim)/params/costmap_common_params.yaml" command="load" ns="local_costmap" />
+
+    <rosparam file="$(find scout_control)/params/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find scout_gazebo_sim)/params/global_costmap_params.yaml" command="load" />
+
+    <rosparam file="$(find scout_control)/params/teb_local_planner_params.yaml" command="load" />
+    <rosparam file="$(find scout_description)/param/4wd/move_base_params.yaml" command="load" />
+
+	<param name="base_global_planner" value="global_planner/GlobalPlanner" />
+		<param name="planner_frequency" value="1.0" />
+		<param name="planner_patience" value="5.0" />
+		<param name="base_local_planner" value="teb_local_planner/TebLocalPlannerROS" />
+		<param name="controller_frequency" value="5.0" />
+		<param name="controller_patience" value="15.0" />
+        <param name="clearing_rotation_allowed" value="false" />  
+
+  </node> -->

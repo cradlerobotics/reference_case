@@ -1,0 +1,142 @@
+<?xml version="1"?>
+
+<launch>
+  <!-- rosbridge setup -->
+  <arg name="port" default="9090" />
+  <arg name="address" default="" />
+  <arg name="ssl" default="false" />
+  <arg name="certfile" default=""/>
+  <arg name="keyfile" default="" />
+
+  <arg name="retry_startup_delay" default="5" />
+
+  <arg name="fragment_timeout" default="600" />
+  <arg name="delay_between_messages" default="0" />
+  <arg name="max_message_size" default="None" />
+  <arg name="unregister_timeout" default="10" />
+
+  <arg name="authenticate" default="false" />
+
+  <arg name="topics_glob" default="[*]" />
+  <arg name="services_glob" default="[*]" />
+  <arg name="params_glob" default="[*]" />
+  <arg name="bson_only_mode" default="false" />
+
+  <!-- Valid options for binary_encoder are "default", "b64" and "bson". -->
+  <arg unless="$(arg bson_only_mode)" name="binary_encoder" default="default"/>
+
+  <group if="$(arg ssl)">
+    <node name="rosbridge_websocket" pkg="rosbridge_server" type="rosbridge_websocket" output="screen">
+      <param name="certfile" value="$(arg certfile)" />
+      <param name="keyfile" value="$(arg keyfile)" />
+      <param name="authenticate" value="$(arg authenticate)" />
+      <param name="port" value="$(arg port)"/>
+      <param name="address" value="$(arg address)"/>
+      <param name="retry_startup_delay" value="$(arg retry_startup_delay)"/>
+      <param name="fragment_timeout" value="$(arg fragment_timeout)"/>
+      <param name="delay_between_messages" value="$(arg delay_between_messages)"/>
+      <param name="max_message_size" value="$(arg max_message_size)"/>
+      <param name="unregister_timeout" value="$(arg unregister_timeout)"/>
+
+      <param name="topics_glob" value="$(arg topics_glob)"/>
+      <param name="services_glob" value="$(arg services_glob)"/>
+      <param name="params_glob" value="$(arg params_glob)"/>
+    </node>
+  </group>
+  <group unless="$(arg ssl)">
+    <node name="rosbridge_websocket" pkg="rosbridge_server" type="rosbridge_websocket" output="screen">
+      <param name="authenticate" value="$(arg authenticate)" />
+      <param name="port" value="$(arg port)"/>
+      <param name="address" value="$(arg address)"/>
+      <param name="retry_startup_delay" value="$(arg retry_startup_delay)"/>
+      <param name="fragment_timeout" value="$(arg fragment_timeout)"/>
+      <param name="delay_between_messages" value="$(arg delay_between_messages)"/>
+      <param name="max_message_size" value="$(arg max_message_size)"/>
+      <param name="unregister_timeout" value="$(arg unregister_timeout)"/>
+
+      <param name="topics_glob" value="$(arg topics_glob)"/>
+      <param name="services_glob" value="$(arg services_glob)"/>
+      <param name="params_glob" value="$(arg params_glob)"/>
+
+      <param name="bson_only_mode" value="$(arg bson_only_mode)"/>
+    </node>
+  </group>
+
+  <node name="rosapi" pkg="rosapi" type="rosapi_node">
+    <param name="topics_glob" value="$(arg topics_glob)"/>
+    <param name="services_glob" value="$(arg services_glob)"/>
+    <param name="params_glob" value="$(arg params_glob)"/>
+  </node>
+
+  <!-- end of rosbridge setup -->
+
+
+  <arg name="map_file" default="$(find scout_gazebo_sim)/maps/lf21_sky.yaml"/>
+  <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)">
+    <param name="frame_id" value="map"/>
+  </node>
+
+
+  <node pkg="amcl" type="amcl" name="amcl" output="screen" respawn="true" respawn_delay="3.0">
+    <remap from="/odom" to="/odometry/filtered" />
+    <rosparam file="$(find scout_description)/param/amcl_params.yaml" command="load"/>
+    <!-- 
+       <param name="initial_pose_x" value="6.94"/>
+       <param name="initial_pose_y" value="-3.6829428877268803"/>
+       <param name="initial_pose_a" value="0.0"/>
+    -->
+    
+    <param name="initial_pose_x" value="0.0"/>
+    <param name="initial_pose_y" value="0.0"/>
+    <param name="initial_pose_a" value="0.0"/>
+  </node>
+
+  <!-- Pub initial pose -->
+
+  <node name="initialpose_pub" pkg="rostopic" type="rostopic"                                                                                                                                               
+        args="pub -1 /initialpose geometry_msgs/PoseWithCovarianceStamped                                                                                                                                   
+          '{header: {frame_id: map},                                                                                                                                                                        
+            pose: {pose: {position: {x: 0.0, y: 0.0, z: 0.0},                                                                                                                                               
+                          orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}},
+                   covariance: [0.25,0,0,0,0,0, 0,0.25,0,0,0,0, 0,0,0,0,0,0,
+                                0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0.06853892]}}'
+        " output="screen" />
+
+
+  
+  <!--
+  <include file="$(find scout_gazebo_sim)/launch/open_rslidar.launch" />
+  -->
+  <!-- Run Move Base -->
+  <include file="$(find scout_gazebo_sim)/launch/move_base.launch">
+   <remap from="/odom" to="/odometry/filtered" />
+  <remap from="/cmd_vel" to="/cmd_vel_filtered" />
+  </include>
+
+  <!-- CMD_VEL FILTERING -->
+  <!-- Interceptor Node -->
+  <node name="cmd_vel_interceptor_node" pkg="cmd_vel_interceptor" type="cmd_vel_interceptor_node.py" output="screen"/>
+
+   <!--  Display locations in Rviz--> 
+  <node name="location_markers" pkg="navigation_playground" type="display_locations.py" output="screen"/>
+  <node name="restricted_area_publisher" pkg="navigation_playground" type="pub_restricted_area.py" output="screen" />
+  <!-- Visualisation -->
+  <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find scout_gazebo_sim)/rviz/nuclear_inspection.rviz"/>
+
+  <!-- Foxglove -->
+  <node name="foxglove_bridge" pkg="foxglove_bridge" type="foxglove_bridge" output="screen" />
+
+  <!-- Crop large map to facility area for move_base (prevents StreamOverrunException) -->
+  <!-- AMCL keeps /map (full map); move_base static_layer uses /map_nav (12x12m crop) -->
+  <node name="map_cropper" pkg="navigation_playground" type="map_cropper.py" output="screen">
+    <param name="crop_origin_x" value="-6.0"/>
+    <param name="crop_origin_y" value="-6.0"/>
+    <param name="crop_width"    value="12.0"/>
+    <param name="crop_height"   value="12.0"/>
+  </node>
+
+  <!-- Discrepancy monitor: checks costmap cost along planned path for new blocking obstacles -->
+  <!--
+  <node name="discrepancy_monitor" pkg="navigation_playground" type="discrepancy_monitor.py" output="screen"/>
+    -->
+</launch>

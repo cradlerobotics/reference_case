@@ -1,0 +1,286 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="scout_mini">
+
+
+  <xacro:arg name="robot_namespace" default="scout" />
+  <xacro:arg name="urdf_extras" default="empty.urdf" />
+
+  <!-- Base link -->
+  <link name="base_link">
+    <visual>
+      <origin rpy="1.57 0 1.57" xyz="0 0 0.201"/>
+      <geometry>
+        <mesh filename="package://scout_description/meshes/scout_mini_base_link2.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="1.57 0 1.57" xyz="0 0 0.201"/>
+      <geometry>
+        <mesh filename="package://scout_description/meshes/scout_mini_base_link2.dae"/>
+      </geometry>
+    </collision>
+  </link>
+
+<!-- base_footprint -->
+  <link name="inertial_link">
+      <inertial>
+          <mass value="60" />
+          <origin xyz="0.0 0.0 0.0" />
+          <inertia ixx="2.288641" ixy="0" ixz="0" iyy="5.103976" iyz="0" izz="3.431465" />
+      </inertial>
+  </link>
+
+  <joint name="inertial_joint" type="fixed">
+      <origin xyz="0 0 0.201" rpy="0 0 0" />
+      <parent link="base_link" />
+      <child link="inertial_link" />
+  </joint>
+
+  
+  <!-- core_box_base_link -->
+  <link name="core_box_base_link">
+      <visual>
+          <origin xyz="0 0 0"
+                  rpy="1.57 0 1.57" />
+          <geometry>
+              <mesh filename="package://scout_description/meshes/box_agile.stl" scale="0.001 0.001 0.001"/>
+          </geometry>
+          <material name="MetallicGray">
+            <color rgba="0.7 0.7 0.7 1.0"/> <!-- Light gray metallic look -->
+          </material>
+      </visual>
+      <collision>
+      <origin
+          xyz="0 0 0"
+          rpy="1.57 0 1.57" />
+      <geometry>
+          <mesh
+          filename="package://scout_description/meshes/box_agile.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      </collision>
+  </link>
+
+  <joint name="box_fix_joint" type="fixed">
+      <origin
+          xyz="0 0 0.25"
+          rpy="0 0 0" />
+      <parent link="base_link"/>
+      <child link="core_box_base_link"/>
+  </joint>
+
+<!-- front_left_wheel_link -->
+  <link name="front_left_wheel_link">
+    <inertial>
+      <mass value="3"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="0.7171" ixy="0" ixz="0" iyy="0.7171" iyz="0" izz="0.1361"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://scout_description/meshes/wheel.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://scout_description/meshes/wheel.dae"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="front_left_wheel" type="continuous">
+    <parent link="base_link"/>
+    <child link="front_left_wheel_link"/>
+    <origin rpy="-1.57 0 0" xyz="0.2319755 0.2082515 0.1"/>
+    <axis rpy="0 0 0" xyz="0 0 -1"/>
+  </joint>
+
+<!-- rear_left_wheel_link -->
+  <link name="rear_left_wheel_link">
+    <inertial>
+      <mass value="3"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="0.7171" ixy="0" ixz="0" iyy="0.7171" iyz="0" izz="0.1361"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://scout_description/meshes/wheel.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://scout_description/meshes/wheel.dae"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="rear_left_wheel" type="continuous">
+    <parent link="base_link"/>
+    <child link="rear_left_wheel_link"/>
+    <origin rpy="-1.57 0 0" xyz="-0.2319755 0.2082515 0.1"/>
+    <axis rpy="0 0 0" xyz="0 0 -1"/>
+  </joint>
+
+<!-- front_right_wheel_link -->
+  <link name="front_right_wheel_link">
+    <inertial>
+      <mass value="3"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="0.7171" ixy="0" ixz="0" iyy="0.7171" iyz="0" izz="0.1361"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://scout_description/meshes/wheel.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://scout_description/meshes/wheel.dae"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="front_right_wheel" type="continuous">
+    <parent link="base_link"/>
+    <child link="front_right_wheel_link"/>
+    <origin rpy="1.57 0 0" xyz="0.2319755 -0.2082515 0.1"/>
+    <axis rpy="0 0 0" xyz="0 0 -1"/>
+  </joint>
+
+  <!-- rear_right_wheel_link -->  
+  <link name="rear_right_wheel_link">
+    <inertial>
+      <mass value="3"/>
+      <origin xyz="0 0 0"/>
+      <inertia ixx="0.7171" ixy="0" ixz="0" iyy="0.7171" iyz="0" izz="0.1361"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://scout_description/meshes/wheel.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://scout_description/meshes/wheel.dae"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="rear_right_wheel" type="continuous">
+    <parent link="base_link"/>
+    <child link="rear_right_wheel_link"/>
+    <origin rpy="1.57 0 0" xyz="-0.2319755 -0.2082515 0.1"/>
+    <axis rpy="0 0 0" xyz="0 0 -1"/>
+  </joint>
+
+
+  <transmission name="front_right_wheel_trans" type="SimpleTransmission">
+    <type>transmission_interface/SimpleTransmission</type>
+    <actuator name="front_right_wheel_motor">
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+    <joint name="front_right_wheel">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </joint>
+  </transmission>
+  <transmission name="front_left_wheel_trans" type="SimpleTransmission">
+    <type>transmission_interface/SimpleTransmission</type>
+    <actuator name="front_left_wheel_motor">
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+    <joint name="front_left_wheel">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </joint>
+  </transmission>
+  <transmission name="rear_left_wheel_trans" type="SimpleTransmission">
+    <type>transmission_interface/SimpleTransmission</type>
+    <actuator name="rear_left_wheel_motor">
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+    <joint name="rear_left_wheel">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </joint>
+  </transmission>
+  <transmission name="rear_right_wheel_trans" type="SimpleTransmission">
+    <type>transmission_interface/SimpleTransmission</type>
+    <actuator name="rear_right_wheel_motor">
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+    <joint name="rear_right_wheel">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </joint>
+  </transmission>
+
+  <!-- Gazebo definitions  -->
+  <!-- Controller configurations -->
+  <gazebo>
+    <plugin filename="libgazebo_ros_control.so" name="gazebo_ros_control">
+      <robotNamespace>/</robotNamespace>
+    </plugin>
+  </gazebo>
+  <!-- kp spring constant, kd damping constant -->
+  <gazebo>
+    <mu1 value="1.0"/>
+    <mu2 value="0.9"/>
+    <kp value="10000000.0"/>
+    <kd value="1.0"/>
+    <fdir1 value="1 0 0"/>
+    <minDepth value="0.001"/>
+    <maxContacts value="64"/>
+  </gazebo>
+
+  <xacro:arg name="gpu" default="false"/>
+  <xacro:property name="gpu" value="$(arg gpu)" />
+  <xacro:arg name="organize_cloud" default="false"/>
+  <xacro:property name="organize_cloud" value="$(arg organize_cloud)" />
+  
+  <!-- Velodyne URDF, plugin, etc -->
+  <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
+  <xacro:VLP-16 parent="base_link" name="velodyne" topic="/velodyne_points" organize_cloud="${organize_cloud}" hz="10" samples="440" gpu="${gpu}">
+    <origin xyz="0 0 0.3665" rpy="0 0 0" />
+  </xacro:VLP-16>
+ 
+<!--
+   <gazebo>
+        <plugin name="skid_steer_drive_controller" filename="libgazebo_ros_skid_steer_drive.so">
+            <updateRate>50.0</updateRate>
+            <robotNamespace>/</robotNamespace>
+            <leftFrontJoint>front_left_wheel</leftFrontJoint>
+            <rightFrontJoint>front_right_wheel</rightFrontJoint>
+            <leftRearJoint>rear_left_wheel</leftRearJoint>
+            <rightRearJoint>rear_right_wheel</rightRearJoint>
+            <wheelSeparation>0.46</wheelSeparation>
+            <wheelDiameter>0.32918</wheelDiameter>
+            <robotBaseFrame>base_link</robotBaseFrame>
+            <torque>1000</torque>
+            <commandTopic>cmd_vel</commandTopic>
+            <broadcastTF>false</broadcastTF>
+            <odometryTopic>odom</odometryTopic>
+            <odometryFrame>odom</odometryFrame>
+            <covariance_x>0.000100</covariance_x>
+            <covariance_y>0.000100</covariance_y>
+            <covariance_yaw>0.010000</covariance_yaw>
+        </plugin>
+  </gazebo>
+-->
+
+  <gazebo>
+        <plugin name="object_controller" filename="libgazebo_ros_planar_move.so">
+            <commandTopic>cmd_vel</commandTopic>
+            <odometryTopic>odom</odometryTopic>
+            <odometryFrame>odom</odometryFrame>
+            <odometryRate>20.0</odometryRate>
+            <robotBaseFrame>chassis_link</robotBaseFrame>
+        </plugin>
+    </gazebo>
+
+
+</robot>

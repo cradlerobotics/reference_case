@@ -1,0 +1,297 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="scout_mini">
+  
+  <xacro:arg name="robot_namespace" default="scout" />
+
+  <xacro:property name="PI" value="3.1415926535897931" />
+
+  <xacro:property name="wheelbase" value="0.463951" />
+  <xacro:property name="track" value="0.416503" />
+  <xacro:property name="wheel_vertical_offset" value="0.1" />
+  <xacro:property name="footprint_vertical_offset" value="0.201" />
+
+  <xacro:property name="wheel_width" value="0.8e-01" />
+  <xacro:property name="wheel_radius" value="1.600e-01" />
+
+  <xacro:property name="chassis_length" value="0.6200000" />
+  <xacro:property name="chassis_width" value="0.585000" />
+  <xacro:property name="chassis_height" value="0.235000" />
+
+  <xacro:macro name="wheel" params="prefix *joint_pose *joint_axis">
+
+    <link name="${prefix}_wheel_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+        <geometry>
+          <mesh filename="package://scout_description/meshes/wheel.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.477"/>
+        <inertia
+          ixx="0.0013" ixy="0" ixz="0"
+          iyy="0.0024" iyz="0"
+          izz="0.0013"/>
+      </inertial>
+    </link>
+
+    <gazebo reference="${prefix}_wheel_link">
+      <selfCollide>false</selfCollide>
+      <mu1 value="0.5"/>
+      <mu2 value="0.5"/>
+      <kp value="10000000.0" />
+      <kd value="1" />
+      <fdir1 value="1 0 0"/>
+    </gazebo>
+
+    <joint name="${prefix}_wheel" type="continuous">
+      <parent link="chassis_link"/>
+      <child link="${prefix}_wheel_link"/>
+      <xacro:insert_block name="joint_pose"/>
+      <xacro:insert_block name="joint_axis"/>
+    </joint>
+
+    <!-- In reality, Jackal has only two motors, one per side. However, it's more
+         straightforward for Gazebo to simulate as if there's an actuator per wheel. -->
+    <transmission name="${prefix}_wheel_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <actuator name="${prefix}_actuator">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+      <joint name="${prefix}_wheel">
+        <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+      </joint>     
+    </transmission>
+  </xacro:macro>
+
+  <xacro:wheel prefix="front_left">
+    <origin xyz="${wheelbase/2} ${track/2} ${wheel_vertical_offset}" rpy="-${PI} 0 0 "/>
+    <axis rpy="0 0 0" xyz="0 -1 0"/>
+  </xacro:wheel>
+  <xacro:wheel prefix="front_right">
+    <origin xyz="${wheelbase/2} ${-track/2} ${wheel_vertical_offset}" rpy="0 0 0"/>
+    <axis rpy="0 0 0" xyz="0 1 0"/>
+  </xacro:wheel>
+  <xacro:wheel prefix="rear_left">
+    <origin xyz="${-wheelbase/2} ${track/2} ${wheel_vertical_offset}" rpy="-${PI} 0 0"/>
+    <axis rpy="0 0 0" xyz="0 -1 0"/>
+  </xacro:wheel>
+  <xacro:wheel prefix="rear_right">
+    <origin xyz="${-wheelbase/2} ${-track/2} ${wheel_vertical_offset}" rpy="0 0 0"/>
+    <axis rpy="0 0 0" xyz="0 1 0"/>
+ </xacro:wheel>
+
+
+  <link name="base_link"></link>
+
+  <joint name="base_link_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="base_link"/>
+    <child link="chassis_link" />
+  </joint>
+
+  <link name="chassis_link">
+    <visual>
+      <!-- <origin xyz="0 0 ${footprint_vertical_offset}" rpy="${PI/2} 0 ${PI/2}"/> -->
+      <origin xyz="0 0 ${footprint_vertical_offset}" rpy="${PI/2} 0 ${-PI/2}"/>
+      <geometry>
+        <mesh filename="package://scout_description/meshes/scout_mini_base_link2.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${chassis_height/2}"/>
+      <geometry>
+        <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <!-- Center of mass -->
+      <origin xyz="0.012  0.002 0.067" rpy="0 0 0"/>
+      <mass value="16.523"/>
+      <!-- Moments of inertia: ( chassis without wheels ) -->
+      <inertia
+        ixx="0.3136" ixy="-0.0008" ixz="0.0164"
+        iyy="0.3922" iyz="-0.0009"
+        izz="0.4485"/>
+      </inertial>
+  </link>
+
+  <!-- core_box_base_link -->
+  <link name="core_box_base_link">
+      <visual>
+          <origin xyz="0 0 0"
+                  rpy="1.57 0 1.57" />
+          <geometry>
+              <mesh filename="package://scout_description/meshes/box_agile.stl" scale="0.001 0.001 0.001"/>
+          </geometry>
+          <material name="MetallicGray">
+            <color rgba="0.7 0.7 0.7 1.0"/> <!-- Light gray metallic look -->
+          </material>
+      </visual>
+      <collision>
+      <origin
+          xyz="0 0 0"
+          rpy="1.57 0 1.57" />
+      <geometry>
+          <mesh
+          filename="package://scout_description/meshes/box_agile.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      </collision>
+  </link>
+
+  <joint name="box_fix_joint" type="fixed">
+      <origin
+          xyz="0 0 0.25"
+          rpy="0 0 0" />
+      <parent link="chassis_link"/>
+      <child link="core_box_base_link"/>
+  </joint>
+
+  <!-- IMU Link -->
+  <link name="imu_link">
+    <inertial>
+      <mass value="0.01"/>
+      <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
+    </inertial>
+  </link>
+
+  <joint name="imu_joint" type="fixed">
+    <parent link="chassis_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0 0 0.33" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Gazebo definitions  -->
+
+  <!-- Controller configurations 
+  <gazebo>
+      <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+          <robotNamespace>$(arg robot_namespace)</robotNamespace>
+      </plugin>
+  </gazebo>-->
+
+  <!-- kp spring constant, kd damping constant -->
+  <gazebo>
+      <mu1 value="1.0"/>
+      <mu2 value="0.9"/>
+      <kp value="10000000.0" />
+      <kd value="1.0" />
+      <fdir1 value="1 0 0"/>
+      <minDepth value="0.001" />
+      <maxContacts value="64"/>
+  </gazebo>
+
+  <gazebo>
+      <plugin name="object_controller" filename="libgazebo_ros_planar_move.so">
+          <commandTopic>/cmd_vel_filtered</commandTopic>
+          <odometryTopic>odom</odometryTopic>
+          <odometryFrame>odom</odometryFrame>
+          <odometryRate>20.0</odometryRate>
+          <robotBaseFrame>base_link</robotBaseFrame>
+      </plugin>
+  </gazebo>
+  
+
+  <!-- 2D LiDAR LaserScan -->
+  
+  <link name="laser_link">
+    <visual>
+      <geometry>
+        <cylinder radius="0.03" length="0.05"/>
+      </geometry>
+      <material name="laser_material">
+        <color rgba="0.8 0.8 0.8 1.0"/>
+      </material>
+    </visual>
+
+    <collision>
+      <geometry>
+        <cylinder radius="0.03" length="0.05"/>
+      </geometry>
+    </collision>
+
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="1e-4" ixy="0" ixz="0" iyy="1e-4" iyz="0" izz="1e-4"/>
+    </inertial>
+  </link>
+
+  <joint name="laser_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="laser_link"/>
+    <origin xyz="0 0 0.3665" rpy="0 0 0"/>
+  </joint>
+
+  <gazebo reference="laser_link">
+    <sensor type="ray" name="2d_laser">
+      <update_rate>10</update_rate> <!-- 20 -->
+      <visualize>true</visualize> <!-- false -->
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>720</samples>
+            <resolution>1</resolution>
+            <min_angle>-1.5708</min_angle>
+            <max_angle>1.5708</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.1</min>
+          <max>20</max>
+        </range>
+      </ray>
+
+      <plugin name="gazebo_ros_laser" filename="libgazebo_ros_laser.so">
+        <topicName>/scan</topicName>
+        <frameName>laser_link</frameName>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+
+  <!-- Velodyne URDF, plugin, etc  -->
+  <!-- 
+    <xacro:arg name="gpu" default="true"/>
+    <xacro:property name="gpu" value="$(arg gpu)" />
+    <xacro:arg name="organize_cloud" default="false"/>
+    <xacro:property name="organize_cloud" value="$(arg organize_cloud)" />
+  
+    <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
+    <xacro:VLP-16 parent="chassis_link" name="velodyne" topic="/velodyne_points" organize_cloud="${organize_cloud}" hz="10" samples="440" gpu="${gpu}">
+      <origin xyz="0 0 0.3665" rpy="0 0 0" />
+    </xacro:VLP-16>  
+  -->
+  
+  <gazebo>
+        <plugin name="skid_steer_drive_controller" filename="libgazebo_ros_skid_steer_drive.so">
+            <updateRate>50.0</updateRate>
+            <robotNamespace>/</robotNamespace>
+            <leftFrontJoint>front_left_wheel</leftFrontJoint>
+            <rightFrontJoint>front_right_wheel</rightFrontJoint>
+            <leftRearJoint>rear_left_wheel</leftRearJoint>
+            <rightRearJoint>rear_right_wheel</rightRearJoint>
+            <wheelSeparation>${track}</wheelSeparation>
+            <wheelDiameter>${2 * wheel_radius}</wheelDiameter>
+            <robotBaseFrame>chassis_link</robotBaseFrame>
+            <torque>1000</torque>
+            <commandTopic>cmd_vel</commandTopic>
+            <broadcastTF>false</broadcastTF>
+            <odometryTopic>odom</odometryTopic>
+            <odometryFrame>odom</odometryFrame>
+            <covariance_x>0.000100</covariance_x>
+            <covariance_y>0.000100</covariance_y>
+            <covariance_yaw>0.010000</covariance_yaw>
+        </plugin>
+  </gazebo>
+
+    
+</robot>
+
+

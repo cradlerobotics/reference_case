@@ -1,0 +1,192 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="scout_mini">
+  
+  <xacro:arg name="robot_namespace" default="scout" />
+
+  <xacro:property name="PI" value="3.1415926535897931" />
+
+  <xacro:property name="wheelbase" value="0.463951" />
+  <xacro:property name="track" value="0.416503" />
+  <xacro:property name="wheel_vertical_offset" value="0.1" />
+  <xacro:property name="footprint_vertical_offset" value="0.201" />
+
+  <xacro:property name="wheel_radius" value="1.600e-01" />
+  <xacro:property name="wheel_width" value="0.040" />
+
+  <xacro:property name="chassis_length" value="0.6200000" />
+  <xacro:property name="chassis_width" value="0.585000" />
+  <xacro:property name="chassis_height" value="0.235000" />
+
+  <xacro:property name="dummy_inertia" value="1e-09"/>
+
+  <xacro:property name="mount_spacing" value="0.120" />
+
+  <xacro:macro name="wheel" params="prefix *joint_pose *joint_axis">
+
+    <link name="${prefix}_wheel_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+        <geometry>
+          <mesh filename="package://scout_description/meshes/wheel.dae"/>
+        </geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${PI/2} 0 0"/>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.477"/>
+        <inertia
+          ixx="0.0013" ixy="0" ixz="0"
+          iyy="0.0024" iyz="0"
+          izz="0.0013"/>
+      </inertial>
+    </link>
+
+    <gazebo reference="${prefix}_wheel_link">
+      <selfCollide>false</selfCollide>
+      <mu1 value="0.5"/>
+      <mu2 value="0.5"/>
+      <kp value="10000000.0" />
+      <kd value="1" />
+      <fdir1 value="1 0 0"/>
+    </gazebo>
+
+    <joint name="${prefix}_wheel" type="continuous">
+      <parent link="chassis_link"/>
+      <child link="${prefix}_wheel_link"/>
+      <xacro:insert_block name="joint_pose"/>
+      <xacro:insert_block name="joint_axis"/>
+    </joint>
+
+    <!-- In reality, Jackal has only two motors, one per side. However, it's more
+         straightforward for Gazebo to simulate as if there's an actuator per wheel. -->
+    <transmission name="${prefix}_wheel_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <actuator name="${prefix}_actuator">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+      <joint name="${prefix}_wheel">
+        <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+      </joint>     
+    </transmission>
+  </xacro:macro>
+
+  <xacro:wheel prefix="front_left">
+    <origin xyz="${wheelbase/2} ${track/2} ${wheel_vertical_offset}" rpy="0 0 ${PI}"/>
+    <axis rpy="0 0 0" xyz="0 1 0"/>
+  </xacro:wheel>
+  <xacro:wheel prefix="front_right">
+    <origin xyz="${wheelbase/2} ${-track/2} ${wheel_vertical_offset}" rpy="0 0 0"/>
+    <axis rpy="0 0 0" xyz="0 1 0"/>
+  </xacro:wheel>
+  <xacro:wheel prefix="rear_left">
+    <origin xyz="${-wheelbase/2} ${track/2} ${wheel_vertical_offset}" rpy="0 0 ${PI}"/>
+    <axis rpy="0 0 0" xyz="0 1 0"/>
+  </xacro:wheel>
+  <xacro:wheel prefix="rear_right">
+    <origin xyz="${-wheelbase/2} ${-track/2} ${wheel_vertical_offset}" rpy="0 0 0"/>
+    <axis rpy="0 0 0" xyz="0 1 0"/>
+ </xacro:wheel>
+
+
+  <link name="base_link"></link>
+
+  <joint name="base_link_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="base_link"/>
+    <child link="chassis_link" />
+  </joint>
+
+  <link name="chassis_link">
+    <visual>
+      <origin xyz="0 0 ${footprint_vertical_offset}" rpy="${PI/2} 0 ${PI/2}"/>
+      <geometry>
+        <mesh filename="package://scout_description/meshes/scout_mini_base_link2.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${chassis_height/2}"/>
+      <geometry>
+        <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <!-- Center of mass -->
+      <origin xyz="0.012  0.002 0.067" rpy="0 0 0"/>
+      <mass value="16.523"/>
+      <!-- Moments of inertia: ( chassis without wheels ) -->
+      <inertia
+        ixx="0.3136" ixy="-0.0008" ixz="0.0164"
+        iyy="0.3922" iyz="-0.0009"
+        izz="0.4485"/>
+      </inertial>
+  </link>
+
+  <!-- core_box_base_link -->
+  <link name="core_box_base_link">
+      <visual>
+          <origin xyz="0 0 0"
+                  rpy="1.57 0 1.57" />
+          <geometry>
+              <mesh filename="package://scout_description/meshes/box_agile.stl" scale="0.001 0.001 0.001"/>
+          </geometry>
+          <material name="MetallicGray">
+            <color rgba="0.7 0.7 0.7 1.0"/> <!-- Light gray metallic look -->
+          </material>
+      </visual>
+      <collision>
+      <origin
+          xyz="0 0 0"
+          rpy="1.57 0 1.57" />
+      <geometry>
+          <mesh
+          filename="package://scout_description/meshes/box_agile.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      </collision>
+  </link>
+
+  <joint name="box_fix_joint" type="fixed">
+      <origin
+          xyz="0 0 0.25"
+          rpy="0 0 0" />
+      <parent link="chassis_link"/>
+      <child link="core_box_base_link"/>
+  </joint>
+
+  <!-- Gazebo definitions  -->
+  <!-- Controller configurations -->
+  <gazebo>
+    <plugin filename="libgazebo_ros_control.so" name="gazebo_ros_control">
+      <robotNamespace>/</robotNamespace>
+    </plugin>
+  </gazebo>
+  <!-- kp spring constant, kd damping constant -->
+  <gazebo>
+    <mu1 value="1.0"/>
+    <mu2 value="0.9"/>
+    <kp value="10000000.0"/>
+    <kd value="1.0"/>
+    <fdir1 value="1 0 0"/>
+    <minDepth value="0.001"/>
+    <maxContacts value="64"/>
+  </gazebo>
+
+
+  <xacro:arg name="gpu" default="false"/>
+  <xacro:property name="gpu" value="$(arg gpu)" />
+  <xacro:arg name="organize_cloud" default="false"/>
+  <xacro:property name="organize_cloud" value="$(arg organize_cloud)" />
+  
+  <!-- Velodyne URDF, plugin, etc -->
+  <xacro:include filename="$(find velodyne_description)/urdf/VLP-16.urdf.xacro"/>
+  <xacro:VLP-16 parent="base_link" name="velodyne" topic="/velodyne_points" organize_cloud="${organize_cloud}" hz="10" samples="440" gpu="${gpu}">
+    <origin xyz="0 0 0.3665" rpy="0 0 0" />
+  </xacro:VLP-16>
+ 
+
+
+</robot>

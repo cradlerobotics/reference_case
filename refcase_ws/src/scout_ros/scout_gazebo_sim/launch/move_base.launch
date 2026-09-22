@@ -1,0 +1,27 @@
+<launch> 
+ 
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <remap from="odom" to="/odometry/filtered"/>
+     <!-- Load costmap parameters -->
+    <rosparam file="$(find scout_description)/param/4wd/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find scout_description)/param/4wd/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find scout_description)/param/4wd/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find scout_description)/param/4wd/global_costmap_params.yaml" command="load" />
+    <!-- Override static_layer to use cropped map — avoids StreamOverrunException on large maps (physical robot only) -->
+    <param name="global_costmap/static_layer/map_topic"           value="/map_nav"/>
+    <param name="global_costmap/static_layer/subscribe_to_updates" value="false"/>
+
+
+    <!-- Load planner parameters -->
+    <rosparam file="$(find scout_description)/param/4wd/base_local_planner_params.yaml" command="load" />
+    <rosparam file="$(find scout_description)/param/4wd/move_base_params.yaml" command="load" />
+
+    
+    <!-- Missing global planner::TOBEVERIFIED -->
+    <!--
+    <param name="base_global_planner" type="string" value="navfn/NavfnROS" />
+    <param name="base_local_planner" value="base_local_planner/TrajecotryPlannerROS" />
+    -->
+  </node>
+
+</launch>

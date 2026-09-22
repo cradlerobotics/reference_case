@@ -1,0 +1,23 @@
+<?xml version='1'?>
+<launch>
+
+    <include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch" />
+
+    <include file="$(find scout_bringup)/launch/vlp16_to_scan.launch" />
+
+
+      <!-- Robot state publisher: publishes base_link -> velodyne (and other URDF joints) TF -->
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find scout_description)/urdf/my_scout_mini_FIXED.xacro'" />
+    
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <!-- joint_state_publisher -->
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+
+    <!--  odom node: rf2o_laser_odometry publishes odom -> base_link TF from /scan -->
+    <!-- rf2o + IMU driver + EKF -->
+    <include file="$(find scout_gazebo_sim)/launch/open_rslidar.launch" />
+
+    <!-- Static TF provided by open_rslidar.launch (yaw=3.14159 for physical mount) -->
+    <!-- <node pkg="tf" type="static_transform_publisher" name="base_link_to_velodyne" args="0.0 0.0 0.348575 0.0 0.0 0.0 base_link velodyne 100"/> -->
+
+</launch>

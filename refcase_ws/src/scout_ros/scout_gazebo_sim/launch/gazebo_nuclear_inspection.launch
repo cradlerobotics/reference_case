@@ -1,0 +1,177 @@
+<?xml version="1"?>
+
+<launch>
+  <!-- rosbridge setup -->
+  <arg name="port" default="9090" />
+  <arg name="address" default="" />
+  <arg name="ssl" default="false" />
+  <arg name="certfile" default=""/>
+  <arg name="keyfile" default="" />
+
+  <arg name="retry_startup_delay" default="5" />
+
+  <arg name="fragment_timeout" default="600" />
+  <arg name="delay_between_messages" default="0" />
+  <arg name="max_message_size" default="None" />
+  <arg name="unregister_timeout" default="10" />
+
+  <arg name="authenticate" default="false" />
+
+  <arg name="topics_glob" default="[*]" />
+  <arg name="services_glob" default="[*]" />
+  <arg name="params_glob" default="[*]" />
+  <arg name="bson_only_mode" default="false" />
+
+  <!-- Valid options for binary_encoder are "default", "b64" and "bson". -->
+  <arg unless="$(arg bson_only_mode)" name="binary_encoder" default="default"/>
+
+  <group if="$(arg ssl)">
+    <node name="rosbridge_websocket" pkg="rosbridge_server" type="rosbridge_websocket" output="screen">
+      <param name="certfile" value="$(arg certfile)" />
+      <param name="keyfile" value="$(arg keyfile)" />
+      <param name="authenticate" value="$(arg authenticate)" />
+      <param name="port" value="$(arg port)"/>
+      <param name="address" value="$(arg address)"/>
+      <param name="retry_startup_delay" value="$(arg retry_startup_delay)"/>
+      <param name="fragment_timeout" value="$(arg fragment_timeout)"/>
+      <param name="delay_between_messages" value="$(arg delay_between_messages)"/>
+      <param name="max_message_size" value="$(arg max_message_size)"/>
+      <param name="unregister_timeout" value="$(arg unregister_timeout)"/>
+
+      <param name="topics_glob" value="$(arg topics_glob)"/>
+      <param name="services_glob" value="$(arg services_glob)"/>
+      <param name="params_glob" value="$(arg params_glob)"/>
+    </node>
+  </group>
+  <group unless="$(arg ssl)">
+    <node name="rosbridge_websocket" pkg="rosbridge_server" type="rosbridge_websocket" output="screen">
+      <param name="authenticate" value="$(arg authenticate)" />
+      <param name="port" value="$(arg port)"/>
+      <param name="address" value="$(arg address)"/>
+      <param name="retry_startup_delay" value="$(arg retry_startup_delay)"/>
+      <param name="fragment_timeout" value="$(arg fragment_timeout)"/>
+      <param name="delay_between_messages" value="$(arg delay_between_messages)"/>
+      <param name="max_message_size" value="$(arg max_message_size)"/>
+      <param name="unregister_timeout" value="$(arg unregister_timeout)"/>
+
+      <param name="topics_glob" value="$(arg topics_glob)"/>
+      <param name="services_glob" value="$(arg services_glob)"/>
+      <param name="params_glob" value="$(arg params_glob)"/>
+
+      <param name="bson_only_mode" value="$(arg bson_only_mode)"/>
+    </node>
+  </group>
+
+  <node name="rosapi" pkg="rosapi" type="rosapi_node">
+    <param name="topics_glob" value="$(arg topics_glob)"/>
+    <param name="services_glob" value="$(arg services_glob)"/>
+    <param name="params_glob" value="$(arg params_glob)"/>
+  </node>
+<!-- end of rosbridge setup -->
+
+  <!-- Load the surrounding environment into Gazebo -->
+	<include file="$(find gazebo_ros)/launch/empty_world.launch">
+	   <!-- <arg name="world_name" default="$(find scout_gazebo_sim)/worlds/reactor_room.world" /> -->
+     <!-- with discrepancy -->
+	   <arg name="world_name" default="$(find scout_gazebo_sim)/worlds/reactor_room_with_obstacle.world" /> 
+     <arg name="gui" default="false"/> <!-- disabled gazebo gui for temporary-->
+	   <arg name="paused" default="false"/>
+	   <arg name="use_sim_time" default="true"/>
+	   <arg name="headless" default="false"/>
+	   <arg name="debug" default="false"/>
+
+	</include> 
+  
+  <!-- Spawn robot in Gazebo -->
+  <include file="$(find scout_gazebo_sim)/launch/spawn_scout_mini.launch">
+    <arg name="gui" default="false"/> <!-- disabled gazebo gui for temporary-->
+  </include>
+
+  <!--  Map + Localization -->
+  
+  <node name="map_server" pkg="map_server" type="map_server"
+        args="$(find scout_gazebo_sim)/maps/reactor_room_map.yaml" output="screen">
+    <param name="frame_id" value="map"/>
+  </node>
+
+<!--
+  <arg name="map_file" default="$(find scout_gazebo_sim)/maps/reactor_room_map.yaml"/>
+  <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)" />
+-->
+
+  <node pkg="amcl" type="amcl" name="amcl" output="screen">
+    <rosparam file="$(find scout_description)/param/amcl_params.yaml" command="load"/>
+    <param name="initial_pose_x" value="-8.18256378174"/>
+    <param name="initial_pose_y" value="-3.16091156006"/>
+    <param name="initial_pose_a" value="0.0"/>
+  </node>
+
+  <!-- Run Move Base -->
+  <include file="$(find scout_gazebo_sim)/launch/move_base.launch">
+  <remap from="/cmd_vel" to="/cmd_vel_filtered" />
+  </include>
+
+  <!-- EKF odom passthrough for simulation (no IMU, Gazebo odom is already clean) -->
+  <node pkg="robot_localization" type="ekf_localization_node" name="ekf_localization" output="screen">
+    <param name="frequency"        value="20"/>
+    <param name="sensor_timeout"   value="0.1"/>
+    <param name="two_d_mode"       value="true"/>
+    <param name="publish_tf"       value="true"/>
+    <param name="map_frame"        value="map"/>
+    <param name="odom_frame"       value="odom"/>
+    <param name="base_link_frame"  value="base_link"/>
+    <param name="world_frame"      value="odom"/>
+    <param name="odom0"            value="/odom"/>
+    <rosparam param="odom0_config">[true, true, false,
+                                    false, false, true,
+                                    false, false, false,
+                                    false, false, false,
+                                    false, false, false]</rosparam>
+    <param name="odom0_differential" value="false"/>
+  </node>
+
+  <!-- CMD_VEL FILTERING -->
+  <!-- Interceptor Node -->
+  <node name="cmd_vel_interceptor_node" pkg="cmd_vel_interceptor" type="cmd_vel_interceptor_node.py" output="screen"/>
+
+  <!-- Gwendolen Control Node -->
+  <!-- disable gwenolen control node for now -->
+  <!--
+  <node name="gwendolen_control_node" pkg="cmd_vel_interceptor"
+        type="gwendolen_control_node.py" output="screen"/>
+  -->
+
+  <!-- Visualisation -->
+  <node name="rviz" pkg="rviz" type="rviz"  args="-d $(find scout_gazebo_sim)/rviz/nuclear_inspection.rviz"/>
+
+  <!--  Display locations in Rviz--> 
+  <node name="location_markers" pkg="navigation_playground" type="display_locations.py" output="screen"/>
+
+  <!-- Enable to reveal the discrepancy -->
+  <!-- Run the discrepancy_monitor node-->
+  <node name="discrepancy_marker" pkg="navigation_playground" type="pub_dm_marker.py" output="screen" />
+  <node name="discrepancy_monitor" pkg="navigation_playground" type="discrepancy_monitor.py" output="screen" />
+
+  <!-- Run state machine node -->
+  <!--
+  <node name="sras_integrated_mission" pkg="navigation_playground" type="smach_integrated.py" output="screen" />
+  -->
+
+  <!-- Scenario Manually pub -->
+  <!-- Publish virtual walls -->
+  <!--
+  <node name="virtual_wall_pc_pub" pkg="navigation_playground" type="block_tankzone.py" output="screen" />
+  -->
+  <!-- CANNOT block the entrance at the beginning, it will block the robot's wayout -->
+  
+  <!-- Teleop node -->
+  <!--
+  <include file="$(find scout_control)/launch/scout_teleop_joy.launch">
+    <arg name="joy_dev" value="/dev/input/js0" />
+    <arg name="cmd_topic" value="/cmd_vel" />
+  </include>
+  -->
+
+
+
+</launch>

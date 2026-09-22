@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="navigation_playground" type="monitor_resources.py" name="monitor_resources" output="screen"><remap from="at_location" to="at_location_mon" /><remap from="radiation_status" to="radiation_status_mon" /></node>
+</launch>

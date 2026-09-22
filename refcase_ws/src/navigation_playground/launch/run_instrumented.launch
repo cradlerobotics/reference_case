@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="navigation_test" type="pub_current_pose.py" name="pub_current_pose" output="screen" />
+</launch>

@@ -1,0 +1,73 @@
+DWAPlannerROS:
+
+  # NOTE: DWAPlannerROS silently ignores any parameter whose name is not in
+  # dwa_local_planner's DWAPlannerConfig. Params marked [IGNORED BY DWA] below
+  # are TrajectoryPlannerROS (base_local_planner) names kept only as a record of
+  # intent - they have no effect. Do not tune them expecting a result.
+
+  # Robot Configuration Parameters
+  acc_lim_x: 1.0
+  acc_lim_theta: 2.0
+
+  max_vel_x: 0.2
+  min_vel_x: 0.0
+  max_vel_trans: 0.2
+  min_vel_trans: 0.05
+
+  max_vel_theta: 0.3
+  min_vel_theta: 0.1
+  min_speed_xy: 0.0            # [IGNORED BY DWA]
+  min_speed_theta: 0.0         # [IGNORED BY DWA]
+
+  # Lateral motion - the Scout Mini is skid-steer and cannot strafe.
+  # holonomic_robot is a TrajectoryPlannerROS param and does NOT constrain DWA,
+  # so without these four DWA falls back to its defaults (+/-0.1 m/s, 10 samples)
+  # and scores trajectories the base cannot execute. Pinning y to zero also cuts
+  # the trajectory count per cycle by 10x.
+  max_vel_y: 0.0
+  min_vel_y: 0.0
+  vy_samples: 1
+  acc_lim_y: 0.0
+
+  holonomic_robot: false       # [IGNORED BY DWA] - see max_vel_y block above
+  escape_vel: -0.5             # [IGNORED BY DWA]
+
+  # robot declares goal reached within 0.5m, any orientation. No final rotation.
+
+  # Goal Tolerance Parameters
+  yaw_goal_tolerance: 0.5
+  xy_goal_tolerance: 0.3
+  latch_xy_goal_tolerance: true   # was false - once within xy_goal_tolerance, stop translating and only rotate; prevents combined XY+yaw oscillation at goal
+
+  # Forward Simulation Parameters
+  sim_time: 2.0          # was 1.0 - longer look-ahead lets DWA plan curved arcs that blend rotation + translation
+  sim_granularity: 0.02
+  angular_sim_granularity: 0.02
+  vx_samples: 10         # was 6 - more velocity samples, better arc trajectories found
+  vth_samples: 20        # was vtheta_samples (wrong name, silently ignored)
+  controller_frequency: 20.0
+
+  # Trajectory scoring parameters
+  # DWA scales path/goal bias by costmap resolution internally, so meter_scoring
+  # is meaningless here.
+  meter_scoring: true          # [IGNORED BY DWA]
+  occdist_scale: 0.1           # was 0.3 - default 0.01. At 0.3 the obstacle term was the
+                               # same order as the path/goal terms, so with inflation_radius 1.2
+                               # in a 9x9m room DWA was pushed off the global path almost everywhere.
+                               # 0.1 matches DWA_ENTRANCE_PROFILE, which follows the path reliably.
+  path_distance_bias: 1.2      # was 0.5 (and before that the dead name pdist_scale). default 0.6.
+                               # Must dominate goal_distance_bias or DWA cuts the chord to the local goal
+                               # and shaves one side of a doorway instead of tracking the centred global path.
+  goal_distance_bias: 0.5      # was 0.8 (and before that the dead name gdist_scale). default 0.8
+
+  heading_lookahead: 0.325     # [IGNORED BY DWA] - nearest equivalent is forward_point_distance (default 0.325)
+  heading_scoring: false       # [IGNORED BY DWA]
+  heading_scoring_timestep: 0.8  # [IGNORED BY DWA]
+  dwa: true                    # [IGNORED BY DWA] - real name is use_dwa (default true)
+  simple_attractor: false      # [IGNORED BY DWA]
+  publish_cost_grid_pc: false  # read directly by DWAPlannerROS - MUST stay false (StreamOverrunException)
+
+  #Oscillation Prevention Parameters
+  oscillation_reset_dist: 0.05 #How far the robot must travel in meters before oscillation flags are reset (double, default: 0.05)
+  escape_reset_dist: 0.1       # [IGNORED BY DWA]
+  escape_reset_theta: 0.1      # [IGNORED BY DWA]

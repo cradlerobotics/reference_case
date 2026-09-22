@@ -1,0 +1,11 @@
+1: [] (P(geofence_violation) -> [] D(ss,entry_stop))
+
+2: [] ((P(safe_halt_req) & B(ss,tick) & ~B(ss,halt_observed)) -> [] D(ss,entry_stop))
+
+3: [] ((P(safe_halt_req) & B(ss,halt_observed)) -> <> B(ss,safe_halt_active))
+
+4: [] ((B(ss,safe_halt_active) & P(move)) -> [] D(ss,entry_stop))
+
+
+
+

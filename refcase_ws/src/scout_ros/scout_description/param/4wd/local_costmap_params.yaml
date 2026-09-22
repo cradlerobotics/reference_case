@@ -1,0 +1,36 @@
+local_costmap:
+  global_frame: odom
+  robot_base_frame: base_link
+  update_frequency: 5.0
+  publish_frequency: 2.0
+  rolling_window: true
+  width: 6.0
+  height: 6.0
+  resolution: 0.05
+  transform_tolerance: 0.5
+
+  plugins:
+    - {name: obstacles_layer, type: "costmap_2d::ObstacleLayer"}
+    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+
+  obstacles_layer:
+    enabled: true
+    observation_sources: laser_scan
+    laser_scan:
+      topic: /scan
+      sensor_frame: laser_link
+      data_type: LaserScan
+      clearing: true
+      marking: true
+      min_obstacle_height: -2.0
+      max_obstacle_height: 2.0
+      obstacle_range: 2.5
+      raytrace_range: 3.5
+
+  inflation_layer:
+    # was 0.5 - with an inscribed radius of 0.28 the cost decayed to zero by 0.5m from
+    # any wall, leaving the middle of a ~1m doorway as a flat zero-cost band with no
+    # gradient to centre on. 1.0 gives a cost valley whose minimum is the centreline
+    # and roughly agrees with the global costmap's 1.2.
+    inflation_radius: 1.0
+    cost_scaling_factor: 3.0

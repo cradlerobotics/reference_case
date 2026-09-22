@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+
+
+<launch>
+  <arg name="planner"/>
+  
+  <!-- Move base node -->
+  <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+  
+    <!-- Load costmap parameters -->
+    <rosparam file="$(find scout_control)/params/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find scout_control)/params/costmap_common_params.yaml" command="load" ns="local_costmap" />
+
+    <rosparam file="$(find scout_control)/params/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find scout_control)/params/global_costmap_params.yaml" command="load" />
+
+    <!-- Load planner parameters -->
+    <!-- <rosparam file="$(find scout_control)/params/$(arg planner)_local_planner_params.yaml" command="load" /> -->
+    <rosparam file="$(find scout_control)/params/base_local_planner_params.yaml" command="load" />
+    <rosparam file="$(find scout_control)/params/move_base_params.yaml" command="load" />
+
+    <!-- Missing global planner::TOBEVERIFIED -->
+    
+    <param name="base_global_planner" type="string" value="global_planner/GlobalPlanner" />
+    <param name="base_local_planner" value="base_local_planner/TrajecotryPlannerROS" />
+    
+    <!-- Move base specific optimizations -->
+    <param name="controller_frequency" value="10.0"/>  <!-- Reduced controller frequency -->
+    <param name="planner_frequency" value="1.0"/>      <!-- Reduced planner frequency -->
+    <param name="controller_patience" value="15.0"/>   <!-- Increased patience to reduce frequent updates -->
+    <param name="planner_patience" value="15.0"/>      <!-- Increased patience to reduce frequent updates -->
+    <param name="max_planner_iterations" value="500"/>  <!-- Reduce planner iterations to speed things up -->
+
+  </node>
+</launch>

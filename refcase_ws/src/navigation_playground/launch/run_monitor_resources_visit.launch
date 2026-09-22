@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="navigation_playground" type="monitor_resources.py" name="monitor_resources" output="screen"/>
+</launch>
