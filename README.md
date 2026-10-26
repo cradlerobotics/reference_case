@@ -1,5 +1,14 @@
+# Reference Case
 
-# Reference Case 
+> [!WARNING]
+> **Research Disclaimer — Unpublished Work**
+>
+> This repository contains original, unpublished research that is currently being developed into a manuscript intended for submission to *Reliability Engineering & System Safety* (Elsevier).
+>
+> **All rights are reserved.** The research ideas, methodology, code, and associated materials must not be copied, reproduced, redistributed, or used in other publications.
+>
+> **Status:** Unpublished Research | Manuscript in Preparation
+
 ---
 
 ### Step 1 — Grant display privileges
